@@ -1,9 +1,88 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { questions } from "./questions";
 
 const LETTERS = ["A", "B", "C", "D"];
+const WINNING_SCORE = 6;
+
+function useQuizSounds() {
+  const audioContextRef = useRef(null);
+
+  useEffect(() => {
+    return () => {
+      audioContextRef.current?.close();
+    };
+  }, []);
+
+  function getAudioContext() {
+    if (typeof window === "undefined") return null;
+
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    if (!AudioContext) return null;
+
+    if (!audioContextRef.current || audioContextRef.current.state === "closed") {
+      audioContextRef.current = new AudioContext();
+    }
+
+    if (audioContextRef.current.state === "suspended") {
+      audioContextRef.current.resume();
+    }
+
+    return audioContextRef.current;
+  }
+
+  function tone(context, frequency, start, duration, volume, type = "sine") {
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+
+    oscillator.type = type;
+    oscillator.frequency.setValueAtTime(frequency, start);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(volume, start + 0.012);
+    gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    oscillator.start(start);
+    oscillator.stop(start + duration + 0.02);
+  }
+
+  function playButtonSound() {
+    const context = getAudioContext();
+    if (!context) return;
+
+    const now = context.currentTime;
+    tone(context, 520, now, 0.055, 0.035, "square");
+    tone(context, 760, now + 0.025, 0.045, 0.025, "square");
+  }
+
+  function playWrongAnswerSound() {
+    const context = getAudioContext();
+    if (!context) return;
+
+    const now = context.currentTime;
+    tone(context, 220, now, 0.12, 0.065, "sawtooth");
+    tone(context, 165, now + 0.09, 0.16, 0.055, "sawtooth");
+  }
+
+  function playResultSound(won) {
+    const context = getAudioContext();
+    if (!context) return;
+
+    const start = context.currentTime + 0.12;
+    const notes = won
+      ? [523.25, 659.25, 783.99, 1046.5]
+      : [392, 329.63, 261.63, 196];
+    const step = won ? 0.13 : 0.18;
+
+    notes.forEach((frequency, index) => {
+      tone(context, frequency, start + index * step, won ? 0.2 : 0.24, 0.075, "triangle");
+    });
+  }
+
+  return { playButtonSound, playWrongAnswerSound, playResultSound };
+}
 
 function Ball({ small }) {
   return (
@@ -38,6 +117,7 @@ export default function Home() {
   const [picked, setPicked] = useState(null);
   const [answers, setAnswers] = useState([]);
   const [shown, setShown] = useState(0);
+  const { playButtonSound, playWrongAnswerSound, playResultSound } = useQuizSounds();
 
   const total = questions.length;
   const score = answers.filter((a, i) => a === questions[i].correct).length;
@@ -45,6 +125,7 @@ export default function Home() {
   useEffect(() => {
     if (stage !== "result") return;
     setShown(0);
+    if (score === 0) return;
     let n = 0;
     const id = setInterval(() => {
       n += 1;
@@ -55,6 +136,7 @@ export default function Home() {
   }, [stage, score]);
 
   function start() {
+    playButtonSound();
     setIndex(0);
     setPicked(null);
     setAnswers([]);
@@ -63,16 +145,24 @@ export default function Home() {
 
   function pick(i) {
     if (picked !== null) return;
+    if (i === questions[index].correct) {
+      playButtonSound();
+    } else {
+      playWrongAnswerSound();
+    }
     setPicked(i);
   }
 
   function next() {
+    playButtonSound();
     const updated = [...answers, picked];
     setAnswers(updated);
     if (index + 1 < total) {
       setIndex(index + 1);
       setPicked(null);
     } else {
+      const finalScore = updated.filter((answer, i) => answer === questions[i].correct).length;
+      playResultSound(finalScore >= WINNING_SCORE);
       setStage("result");
     }
   }

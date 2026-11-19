@@ -113,6 +113,69 @@ body {
 .review-q { font-weight: 800; margin-bottom: 6px; }
 .review-a { font-size: 0.95rem; }
 
+@media (max-width: 600px) {
+  .wrap {
+    width: 100%;
+    padding: 18px 12px 40px;
+  }
+
+  .wrap.center {
+    min-height: 100svh;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    gap: 14px;
+  }
+
+  .lead { font-size: 1rem; }
+
+  .card {
+    border-radius: 16px;
+    padding: 16px;
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+
+  .top { margin-bottom: 14px; }
+  .strip { gap: 4px; padding: 6px; }
+  .cell { height: 13px; }
+
+  .question { margin-bottom: 16px; }
+  .options { gap: 10px; }
+  .option {
+    gap: 10px;
+    padding: 10px;
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+  }
+  .letter { width: 32px; height: 32px; border-radius: 8px; }
+
+  .foot {
+    align-items: stretch;
+    margin-top: 16px;
+  }
+  .feedback { width: 100%; font-size: 1rem; }
+  .foot .btn { width: 100%; }
+
+  .result { padding-top: 10px; }
+  .stamp { padding: 6px 20px 9px; }
+  .big-num { font-size: 3.4rem; }
+  .of { font-size: 1.05rem; }
+
+  .review-h { margin-top: 28px; }
+  .review-item { padding: 14px; border-left-width: 9px; }
+}
+
+@media (max-width: 360px) {
+  .wrap { padding-inline: 9px; }
+  .card { padding: 13px; }
+  .option { font-size: 0.92rem; }
+  .btn.big { width: 100%; padding-inline: 18px; }
+}
+
+@media (hover: none) {
+  .btn:hover { transform: none; box-shadow: 4px 4px 0 var(--ink); }
+  .option:hover:not(:disabled) { transform: none; background: var(--paper); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
 }
